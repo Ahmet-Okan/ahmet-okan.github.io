@@ -4,13 +4,804 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ErtemTech · Triyaj</title>
-<meta name="description" content="ErtemTech — Triyaj: tıp öğrencileri için klinik vaka oyunu.">
-<meta http-equiv="refresh" content="0; url=/triyaj/">
-<link rel="canonical" href="/triyaj/">
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#14110e;color:#efe9dc;font:16px/1.5 Georgia,serif}a{color:#d1a04a}</style>
+<meta name="description" content="ErtemTech, tıp öğrencilerinin hasta başında karar vermeyi gerçeğinden önce prova ettiği oyunlar yapan bir sağlık teknolojisi girişimi. İlk ürünümüz Triyaj: tarayıcıda açılan klinik vaka oyunu.">
+<meta property="og:title" content="ErtemTech · Triyaj">
+<meta property="og:description" content="Hasta kapıda. Karar senin. Tıp öğrencileri için klinik vaka oyunu.">
+<meta property="og:image" content="https://ertemteknik.com/img/oyun-triyaj-karari.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#101413">
+<link rel="icon" href="img/ertemtech-ikon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="/triyaj/img/ai/bg-triaj-girisi.webp">
+<style>
+:root{
+  --gece:#101413;      /* acilin gecesi: monitör ışığı vurmuş siyah */
+  --gece-2:#171c1a;
+  --kagit:#ece4d2;     /* vaka dosyası */
+  --murekkep:#1b1814;
+  --yazi:#efe9dc;
+  --soluk:#9b9585;
+  --turuncu:#e8603a;   /* markanın A'sı */
+  --monitor:#8fd3c7;   /* EKG izi, Ercan Abi */
+  --t-kirmizi:#ef5f43; /* triyaj alanları: sadece bilgi taşır */
+  --t-sari:#d9a845;
+  --t-yesil:#5cbfae;
+  --bc:"Barlow Condensed",system-ui,sans-serif;
+  --lb:"Libre Baskerville",Georgia,serif;
+  --kenar:clamp(16px,4vw,64px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--gece);color:var(--yazi);font:400 17px/1.7 var(--lb);overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--monitor);outline-offset:3px}
+.gizli{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.atla{position:absolute;left:12px;top:-60px;z-index:50;background:var(--yazi);color:var(--gece);padding:8px 14px;font-family:var(--bc);font-weight:600}
+.atla:focus{top:12px}
+
+/* ---------- üst çubuk ---------- */
+.ust{position:fixed;inset:0 0 auto 0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--kenar);transition:background .4s}
+.ust.dolu{background:rgba(16,20,19,.86);backdrop-filter:blur(8px)}
+.marka{display:flex;align-items:center;gap:10px;text-decoration:none;font:700 22px/1 var(--bc);letter-spacing:.12em}
+.marka svg{width:34px;height:34px;flex:none}
+.marka span{font-weight:500;color:var(--soluk)}
+.ust nav{display:flex;align-items:center;gap:clamp(12px,2.4vw,32px);font:500 17px/1 var(--bc);letter-spacing:.06em}
+.ust nav a{text-decoration:none;opacity:.8}
+.ust nav a:hover{opacity:1}
+.dugme{display:inline-flex;align-items:center;gap:10px;border:0;cursor:pointer;text-decoration:none;font:700 18px/1 var(--bc);letter-spacing:.1em;text-transform:uppercase;padding:15px 24px;background:var(--turuncu);color:#160d09;transition:transform .15s,background .2s}
+.dugme:hover{background:#f37a55}
+.dugme:active{transform:translateY(1px)}
+.dugme.ince{background:transparent;color:var(--yazi);box-shadow:inset 0 0 0 1.5px rgba(239,233,220,.45)}
+.dugme.ince:hover{box-shadow:inset 0 0 0 1.5px var(--yazi)}
+.ust .dugme{padding:11px 18px;font-size:16px;opacity:1}
+@media (max-width:720px){.ust nav a:not(.dugme){display:none}}
+
+/* ---------- açılış: monitör ---------- */
+.acilis{position:relative;min-height:100svh;display:grid;grid-template-rows:1fr auto;overflow:hidden;isolation:isolate}
+.acilis .resim{position:absolute;inset:-4% -2%;z-index:-3;background:url(/triyaj/img/ai/bg-triaj-girisi.webp) 32% 40%/cover no-repeat;filter:saturate(.9) brightness(.62)}
+.acilis .karart{position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(16,20,19,.55) 0%,rgba(16,20,19,0) 30%,rgba(16,20,19,.35) 58%,var(--gece) 100%),linear-gradient(90deg,rgba(16,20,19,.7),rgba(16,20,19,0) 60%)}
+/* kapıdaki ambulansın tepe lambası */
+.lamba{position:absolute;z-index:-1;left:12%;top:16%;width:34vw;height:34vw;border-radius:50%;mix-blend-mode:screen;pointer-events:none;opacity:0}
+.lamba.k{background:radial-gradient(circle,rgba(239,70,50,.55),rgba(239,70,50,0) 62%)}
+.lamba.m{left:20%;background:radial-gradient(circle,rgba(60,110,255,.5),rgba(60,110,255,0) 62%)}
+#ekg{display:block;width:calc(100% + 2 * var(--kenar));margin:0 calc(-1 * var(--kenar)) clamp(4px,1.5vh,16px);height:clamp(84px,15vh,150px);pointer-events:none}
+.vital{position:absolute;right:var(--kenar);top:max(12vh,88px);margin:0;display:grid;grid-template-columns:repeat(3,auto);gap:4px clamp(18px,3vw,44px);font-family:var(--bc);text-align:right}
+.vital dt{font:italic 400 13px/1.2 var(--lb);color:var(--soluk)}
+.vital dd{margin:0;font:500 clamp(34px,4.6vw,64px)/1 var(--bc);font-variant-numeric:tabular-nums;color:var(--monitor)}
+.vital dd.ta{color:var(--yazi)}
+.vital .kalp{display:inline-block;width:.32em;height:.32em;margin-right:.18em;vertical-align:.32em;background:var(--t-kirmizi);clip-path:polygon(50% 100%,0 35%,15% 5%,50% 25%,85% 5%,100% 35%)}
+.vital .kalp.vur{animation:vur .28s ease-out}
+@keyframes vur{0%{transform:scale(1.5)}100%{transform:scale(1)}}
+.vital .alt{grid-column:1/-1;font:italic 400 14px/1.3 var(--lb);color:var(--soluk);margin-top:8px}
+.acilis-metin{align-self:end;padding:0 var(--kenar) clamp(36px,8vh,88px)}
+.acilis h1{margin:0;font:700 clamp(64px,12.5vw,210px)/.84 var(--bc);text-transform:uppercase;letter-spacing:-.005em}
+.acilis h1 .satir{display:block;overflow:hidden;padding-bottom:.04em}
+.acilis h1 .satir>span{display:block}
+.acilis .alt-metin{display:flex;flex-wrap:wrap;align-items:flex-end;gap:24px 48px;margin-top:clamp(18px,3vh,32px)}
+.acilis .alt-metin p{margin:0;max-width:34em;font-size:clamp(16px,1.35vw,19px);color:#d9d2c3}
+.acilis .alt-metin p b{font-weight:400;color:var(--yazi)}
+.eylemler{display:flex;flex-wrap:wrap;gap:12px}
+.ses-dugme[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--monitor);color:var(--monitor)}
+.asagi{position:absolute;left:50%;bottom:16px;width:1.5px;height:44px;background:linear-gradient(var(--yazi),transparent);opacity:.4}
+@media (max-width:720px){
+  .vital{left:var(--kenar);right:auto;top:84px;text-align:left}
+  .asagi{display:none}
+}
+
+/* ---------- ortak bölüm ---------- */
+.bolum{padding:clamp(80px,13vh,160px) var(--kenar);position:relative}
+.bolum h2{margin:0 0 .5em;font:700 clamp(44px,7vw,112px)/.9 var(--bc);text-transform:uppercase;letter-spacing:-.003em;max-width:14ch}
+.on{font:italic 400 clamp(17px,1.5vw,21px)/1.6 var(--lb);color:var(--soluk);max-width:36em;margin:0}
+
+/* ---------- tetkik sonuçları (kâğıt) ---------- */
+.kagit{background:var(--kagit);color:var(--murekkep)}
+.kagit::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .22 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.kagit .on{color:#5b5447}
+.rapor{position:relative;margin-top:clamp(36px,6vh,64px);max-width:1180px;border-top:3px solid var(--murekkep)}
+.rapor-bas{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding:14px 0;border-bottom:1px solid rgba(27,24,20,.35);font:600 15px/1.3 var(--bc);letter-spacing:.06em}
+.rapor-bas span:last-child{font-weight:500;color:#5b5447}
+.tetkik{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(150px,.7fr) minmax(0,1fr);gap:12px 32px;align-items:baseline;padding:22px 0;border-bottom:1px solid rgba(27,24,20,.25)}
+.tetkik .ad{font-size:clamp(16px,1.3vw,19px)}
+.tetkik .sonuc{font:700 clamp(40px,4.6vw,72px)/1 var(--bc);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tetkik .sonuc.kelime{font-size:clamp(30px,3vw,46px)}
+.tetkik .bayrak{display:inline-block;margin-left:.2em;font-size:.5em;vertical-align:.6em;color:#b4321d}
+.tetkik .kaynak{font:italic 400 14px/1.5 var(--lb);color:#5b5447}
+.yorum{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.7fr);gap:12px 32px;padding:26px 0 0}
+.yorum b{font:600 15px/1.3 var(--bc);letter-spacing:.06em}
+.yorum p{margin:0;font:italic 400 clamp(20px,2vw,28px)/1.45 var(--lb)}
+@media (max-width:820px){
+  .tetkik{grid-template-columns:1fr auto}
+  .tetkik .kaynak{grid-column:1/-1}
+  .yorum{grid-template-columns:1fr}
+}
+
+/* ---------- bir vaka, baştan sona (sabitlenen bölüm) ---------- */
+.vaka{padding:0;background:var(--gece)}
+.vaka-ic{min-height:100svh;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr);grid-template-rows:auto 1fr auto auto;gap:0 clamp(24px,4vw,64px);padding:clamp(84px,12vh,120px) var(--kenar) 28px}
+.vaka-bas{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:clamp(20px,4vh,40px)}
+.vaka-bas h2{margin:0;font:700 clamp(40px,5.4vw,84px)/.9 var(--bc);text-transform:uppercase}
+.saat{text-align:right;font-family:var(--bc)}
+.saat small{display:block;font:italic 400 14px/1.2 var(--lb);color:var(--soluk)}
+.saat output{display:block;font:500 clamp(48px,6vw,96px)/1 var(--bc);font-variant-numeric:tabular-nums;color:var(--yazi)}
+.adimlar{position:relative;align-self:center;display:grid}
+.adimlar .adim{grid-area:1/1}
+.adim{max-width:30em}
+.adim .no{font:600 18px/1 var(--bc);letter-spacing:.08em;color:var(--turuncu)}
+.adim h3{margin:.35em 0 .4em;font:700 clamp(32px,3.4vw,54px)/.95 var(--bc);text-transform:uppercase}
+.adim p{margin:0;color:#d4cdbd}
+.adim .ercan{margin-top:1.1em;padding-left:14px;border-left:2px solid var(--monitor);font-style:italic;color:var(--monitor)}
+.ekranlar{position:relative;align-self:center;aspect-ratio:16/10;background:#0a0c0b;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(239,233,220,.12)}
+.ekranlar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vaka-ekg{grid-column:1/-1;display:flex;align-items:center;gap:20px;margin-top:clamp(16px,3vh,28px);font-family:var(--bc)}
+.vaka-ekg canvas{flex:1;height:64px;min-width:0}
+.vaka-ekg .nabiz{font:500 34px/1 var(--bc);color:var(--monitor);font-variant-numeric:tabular-nums;min-width:4.4em;text-align:right}
+.vaka-ekg .nabiz small{font:italic 400 13px var(--lb);color:var(--soluk);margin-left:6px}
+.ilerleme{grid-column:1/-1;display:flex;gap:6px;margin-top:14px}
+.ilerleme i{flex:1;height:3px;background:rgba(239,233,220,.15)}
+.ilerleme i b{display:block;height:100%;width:0;background:var(--turuncu)}
+/* sabitleme yoksa (telefon / azaltılmış hareket): adımlar alt alta */
+.yigin .vaka-ic{display:block;padding-top:clamp(80px,13vh,160px)}
+.yigin .adimlar,.yigin .ekranlar,.yigin .vaka-ekg,.yigin .ilerleme,.yigin .saat{display:none}
+.duz{display:none}
+.yigin .duz{display:grid;gap:56px;margin-top:24px}
+.duz figure{margin:0}
+.duz img{width:100%;aspect-ratio:16/10;object-fit:cover;margin-bottom:18px;box-shadow:0 0 0 1px rgba(239,233,220,.12)}
+
+/* ---------- sıra sende ---------- */
+.sira{background:linear-gradient(180deg,var(--gece),var(--gece-2))}
+.sira-ic{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1fr);gap:clamp(28px,5vw,80px);align-items:center;max-width:1320px}
+.portre{position:relative;display:block;aspect-ratio:880/1168;overflow:hidden;box-shadow:0 0 0 1px rgba(239,233,220,.14),0 40px 90px rgba(0,0,0,.5)}
+.portre img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .9s ease}
+.portre .sonra{opacity:0}
+.portre.kotu .sonra{opacity:1}
+.portre .etiket{position:absolute;left:0;bottom:0;right:0;padding:48px 20px 16px;background:linear-gradient(transparent,rgba(10,10,9,.85));font:700 26px/1 var(--bc);text-transform:uppercase}
+.portre .etiket small{display:block;margin-top:6px;font:italic 400 14px/1.3 var(--lb);text-transform:none;color:#cfc8b8}
+.alan-kalibi{position:absolute;top:16px;left:16px;padding:9px 14px;font:700 17px/1 var(--bc);letter-spacing:.1em;text-transform:uppercase;color:#120c09;transform:rotate(-3deg);opacity:0}
+.sira h2{max-width:none}
+.soz{margin:0 0 18px;font:400 clamp(20px,2vw,27px)/1.5 var(--lb)}
+.soz b{font:600 15px/1 var(--bc);letter-spacing:.1em;text-transform:uppercase;color:var(--soluk);margin-right:6px}
+.gorunus{margin:0 0 22px;padding-left:14px;border-left:2px solid var(--t-sari);font:italic 400 16px/1.6 var(--lb);color:#d4cdbd}
+.mini-vital{display:flex;flex-wrap:wrap;gap:6px 28px;margin:0 0 26px;font-family:var(--bc)}
+.mini-vital div{display:flex;flex-direction:column}
+.mini-vital dt{font:italic 400 13px/1.2 var(--lb);color:var(--soluk)}
+.mini-vital dd{margin:0;font:500 30px/1.1 var(--bc);color:var(--monitor)}
+.secim-soru{margin:0 0 12px;font:600 18px/1.2 var(--bc);letter-spacing:.06em}
+.secimler{display:flex;flex-wrap:wrap;gap:10px}
+.alan{cursor:pointer;padding:16px 22px;background:transparent;border:2px solid;font:700 19px/1 var(--bc);letter-spacing:.1em;text-transform:uppercase;transition:background .15s,color .15s}
+.alan[data-alan=kirmizi]{border-color:var(--t-kirmizi);color:var(--t-kirmizi)}
+.alan[data-alan=sari]{border-color:var(--t-sari);color:var(--t-sari)}
+.alan[data-alan=yesil]{border-color:var(--t-yesil);color:var(--t-yesil)}
+.alan:hover,.alan[aria-pressed=true]{color:#120c09}
+.alan[data-alan=kirmizi]:hover,.alan[data-alan=kirmizi][aria-pressed=true]{background:var(--t-kirmizi)}
+.alan[data-alan=sari]:hover,.alan[data-alan=sari][aria-pressed=true]{background:var(--t-sari)}
+.alan[data-alan=yesil]:hover,.alan[data-alan=yesil][aria-pressed=true]{background:var(--t-yesil)}
+.secimler[data-bitti] .alan{cursor:default}
+.secimler[data-bitti] .alan[aria-pressed=false]{opacity:.35}
+.cevap{min-height:9.5em;margin-top:26px}
+.ercan-satir{display:flex;gap:16px;align-items:flex-start}
+.ercan-satir img{width:64px;height:84px;object-fit:cover;flex:none;box-shadow:0 0 0 1px rgba(143,211,199,.4)}
+.cevap p{margin:0;font-size:18px}
+.cevap p b{font-weight:400;color:var(--monitor)}
+.cevap .not{margin-top:10px;font-style:italic;color:var(--soluk);font-size:15px}
+.rozet{display:inline-block;margin-top:16px;padding:12px 16px;border:1.5px solid var(--t-sari);font:600 16px/1.3 var(--bc);letter-spacing:.06em;color:var(--t-sari)}
+.rozet small{display:block;font:italic 400 14px/1.4 var(--lb);letter-spacing:0;color:#d4cdbd}
+.devam{margin-top:22px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.devam .not{font:italic 400 15px/1.4 var(--lb);color:var(--soluk)}
+@media (max-width:820px){.sira-ic{grid-template-columns:1fr}.sira .portre{max-width:440px}}
+
+/* ---------- bu gece nöbette ---------- */
+.kadro{background:var(--gece-2)}
+.kadro-ic{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.1fr);gap:clamp(24px,4vw,56px);align-items:start;margin-top:clamp(28px,5vh,56px)}
+.ercan-kart blockquote{margin:20px 0 0;font:italic 400 clamp(18px,1.6vw,22px)/1.55 var(--lb);color:var(--monitor)}
+.ercan-kart .kim{margin-top:10px;font:600 16px/1.3 var(--bc);letter-spacing:.06em}
+.ercan-kart .kim small{display:block;font:italic 400 14px/1.4 var(--lb);letter-spacing:0;color:var(--soluk)}
+.dinle{margin-top:16px;padding:11px 16px;font-size:15px}
+.hastalar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.4vw,18px)}
+.hasta{position:relative;display:block;cursor:pointer;background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit}
+.hasta .portre{aspect-ratio:880/1300}
+.hasta .portre img{object-position:50% 20%}
+.hasta h3{margin:14px 0 4px;font:700 22px/1 var(--bc);text-transform:uppercase}
+.hasta .sikayet{display:block;font:500 16px/1.2 var(--bc);letter-spacing:.04em;color:var(--soluk)}
+.hasta .ne{display:block;margin-top:10px;font:italic 400 14px/1.55 var(--lb);color:#cfc8b8;min-height:6.2em}
+.hasta .ne .s{display:none;color:#f08a73}
+.hasta.kotu .ne .o{display:none}
+.hasta.kotu .ne .s{display:inline}
+.hasta .zaman{position:absolute;top:12px;right:12px;z-index:2;padding:5px 9px;background:rgba(10,10,9,.8);font:600 13px/1 var(--bc);letter-spacing:.08em;color:var(--t-kirmizi);opacity:0;transition:opacity .4s}
+.hasta.kotu .zaman{opacity:1}
+.hasta-ipucu{margin:18px 0 0;font:italic 400 15px/1.5 var(--lb);color:var(--soluk)}
+@media (max-width:560px){.ercan-kart{grid-template-columns:120px 1fr!important;gap:14px!important}.ercan-kart blockquote{font-size:17px}}
+@media (max-width:1000px){.kadro-ic{grid-template-columns:1fr}.ercan-kart{display:grid;grid-template-columns:minmax(0,200px) 1fr;gap:20px;align-items:end}.ercan-kart blockquote{margin-top:0}.hastalar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- uydurma cevap yok ---------- */
+.ilke-ic{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:clamp(28px,5vw,80px);align-items:center}
+.ilke p.uzun{margin:1.2em 0 0;max-width:32em;color:#d4cdbd}
+.esle{display:grid;gap:14px}
+.esle-satir{display:grid;grid-template-columns:minmax(0,1.2fr) 56px minmax(0,1fr);align-items:center;gap:10px}
+.yazilan{padding:16px 18px;background:#0a0c0b;box-shadow:inset 0 0 0 1px rgba(239,233,220,.16);font:400 16px/1.45 var(--lb);min-height:3.4em}
+.yazilan::after{content:"";display:inline-block;width:.5em;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--monitor);animation:imlec 1s steps(1) infinite}
+@keyframes imlec{50%{opacity:0}}
+.ok{height:2px;background:var(--monitor);position:relative;opacity:.8}
+.ok::after{content:"";position:absolute;right:-1px;top:-5px;border:6px solid transparent;border-left:9px solid var(--monitor);border-right:0}
+.bulunan{padding:14px 18px;border:1.5px solid var(--monitor);font:600 19px/1.15 var(--bc);letter-spacing:.04em}
+.bulunan small{display:block;margin-top:4px;font:italic 400 14px/1.4 var(--lb);letter-spacing:0;color:var(--soluk)}
+.esle-not{margin:6px 0 0;font:italic 400 14px/1.5 var(--lb);color:var(--soluk)}
+@media (max-width:900px){.ilke-ic{grid-template-columns:1fr}}
+@media (max-width:560px){.esle-satir{grid-template-columns:1fr}.ok{width:2px;height:22px;margin-left:18px}.ok::after{right:-5px;top:auto;bottom:-1px;border:6px solid transparent;border-top:9px solid var(--monitor);border-bottom:0}}
+
+/* ---------- ilk saha testi ---------- */
+.saha{background:var(--gece-2)}
+.saha .tarih{font:600 18px/1 var(--bc);letter-spacing:.08em;color:var(--turuncu)}
+.saha-akis{margin-top:clamp(24px,4vh,40px);max-width:1100px}
+.saha-akis p{margin:0 0 .5em;font:400 clamp(26px,3.4vw,52px)/1.25 var(--lb)}
+.saha-akis p:nth-child(2){padding-left:clamp(0px,6vw,96px)}
+.saha-akis p:nth-child(3){padding-left:clamp(0px,12vw,192px);color:var(--monitor);font-style:italic}
+.saha-imza{margin-top:28px;font:italic 400 15px/1.5 var(--lb);color:var(--soluk)}
+
+/* ---------- yol haritası ---------- */
+.yol-liste{list-style:none;margin:clamp(32px,5vh,56px) 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.yol-liste li{position:relative;padding:28px 22px 0 0;border-top:2px solid rgba(239,233,220,.2)}
+.yol-liste li::before{content:"";position:absolute;top:-8px;left:0;width:14px;height:14px;background:var(--gece);border:2px solid rgba(239,233,220,.5);border-radius:50%}
+.yol-liste li.oldu{border-top-color:var(--monitor)}
+.yol-liste li.oldu::before{background:var(--monitor);border-color:var(--monitor)}
+.yol-liste .ne-zaman{font:600 17px/1.2 var(--bc);letter-spacing:.06em;color:var(--soluk)}
+.yol-liste li.oldu .ne-zaman{color:var(--monitor)}
+.yol-liste h3{margin:.4em 0 .35em;font:700 26px/1 var(--bc);text-transform:uppercase}
+.yol-liste p{margin:0;font-size:15px;line-height:1.65;color:#cfc8b8}
+.model{margin-top:clamp(40px,6vh,64px);max-width:44em;padding:22px 26px;border-left:3px solid var(--turuncu);background:rgba(239,233,220,.04);font:italic 400 clamp(17px,1.5vw,20px)/1.6 var(--lb)}
+@media (max-width:1000px){.yol-liste{grid-template-columns:1fr}.yol-liste li{border-top:0;border-left:2px solid rgba(239,233,220,.2);padding:0 0 30px 28px}.yol-liste li.oldu{border-left-color:var(--monitor)}.yol-liste li::before{top:2px;left:-8px}}
+
+/* ---------- ekip ---------- */
+.ekip-liste{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(20px,3vw,40px);margin-top:clamp(28px,5vh,56px)}
+.kisi{padding-top:20px;border-top:1px solid rgba(239,233,220,.25)}
+.kisi .rol{font:italic 400 15px/1.4 var(--lb);color:var(--soluk)}
+.kisi h3{margin:.3em 0 .3em;font:700 clamp(30px,3vw,44px)/.95 var(--bc);text-transform:uppercase}
+.kisi p{margin:0;font-size:15px;color:#cfc8b8}
+@media (max-width:820px){.ekip-liste{grid-template-columns:1fr}}
+
+/* ---------- son çağrı + alt bilgi ---------- */
+.son{position:relative;overflow:hidden;isolation:isolate;padding:clamp(110px,20vh,220px) var(--kenar) clamp(70px,10vh,120px)}
+.son .resim{position:absolute;inset:0;z-index:-2;background:url(/triyaj/img/ai/bg-kirmizi-alan.webp) center/cover;filter:brightness(.35) saturate(.85)}
+.son::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,var(--gece) 0%,rgba(16,20,19,.2) 40%,rgba(16,20,19,.6) 100%)}
+.son h2{margin:0 0 28px;font:700 clamp(64px,13vw,220px)/.84 var(--bc);text-transform:uppercase}
+.son .eylemler .dugme{font-size:21px;padding:19px 30px}
+.alt{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px 40px;padding:28px var(--kenar) 40px;border-top:1px solid rgba(239,233,220,.12);font:400 14px/1.6 var(--lb);color:var(--soluk)}
+.alt a{color:var(--yazi)}
+.alt .marka{font-size:18px}
+.alt .marka svg{width:26px;height:26px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
 </head>
 <body>
-<p>ErtemTech · <a href="/triyaj/">Triyaj'a geç →</a></p>
-<script>location.replace("/triyaj/");</script>
+<a class="atla" href="#icerik">İçeriğe geç</a>
+
+<header class="ust" id="ust">
+  <a class="marka" href="#" aria-label="ErtemTech, başa dön">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M4 36 H20 l3 -4 l3 4 H30 L33 42 L37 14 L41 50 L44 36 H60" fill="none" stroke="#8fd3c7" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><rect x="47" y="8" width="10" height="10" fill="#e8603a"/></svg>
+    ERTEM<span>TECH</span>
+  </a>
+  <nav aria-label="Ana menü">
+    <a href="#vaka">Nasıl oynanır</a>
+    <a href="#kadro">Hastalar</a>
+    <a href="#ekip">Ekip</a>
+    <a class="dugme" href="/triyaj/">Triyaj'ı oyna</a>
+  </nav>
+</header>
+
+<main id="icerik">
+
+<!-- AÇILIŞ: kapıda bir hasta, monitör çalışıyor -->
+<section class="acilis" aria-labelledby="baslik">
+  <div class="resim" aria-hidden="true"></div>
+  <div class="lamba k" aria-hidden="true"></div>
+  <div class="lamba m" aria-hidden="true"></div>
+  <div class="karart" aria-hidden="true"></div>
+  <dl class="vital" aria-label="Kapıdaki hastanın vital bulguları">
+    <dt>Nabız /dk</dt><dt>SpO₂</dt><dt>TA mmHg</dt>
+    <dd><span class="kalp" id="kalp"></span><span data-say="104">104</span></dd>
+    <dd>%<span data-say="95">95</span></dd>
+    <dd class="ta">150/90</dd>
+    <dd class="alt">Erkek, 58 · göğüs ağrısı · gece 02.33</dd>
+  </dl>
+
+  <div class="acilis-metin">
+    <canvas id="ekg" aria-hidden="true"></canvas>
+    <h1 id="baslik"><span class="satir"><span>Hasta kapıda.</span></span><span class="satir"><span>Karar senin.</span></span></h1>
+    <div class="alt-metin">
+      <p><b>ErtemTech</b>, tıp öğrencilerinin hasta başında karar vermeyi gerçeğinden önce prova ettiği oyunlar yapıyor. İlk ürünümüz <b>Triyaj</b>: tarayıcıda açılan, dört acil vakalık bir klinik vaka oyunu.</p>
+      <div class="eylemler">
+        <a class="dugme" href="/triyaj/">Nöbete başla</a>
+        <button class="dugme ince ses-dugme" type="button" aria-pressed="false" id="sesDugme">Sesi aç</button>
+      </div>
+    </div>
+  </div>
+  <span class="asagi" aria-hidden="true"></span>
+</section>
+
+<!-- SORUN: tetkik sonuçları -->
+<section class="bolum kagit" aria-labelledby="sorun-b">
+  <h2 id="sorun-b">Kitap var.<br>Prova yok.</h2>
+  <p class="on">Tıp öğrencisi hastalığı kitaptan okuyor. Hasta başında karar vermeyi ilk kez gerçek bir hastayla deniyor.</p>
+  <div class="rapor" role="table" aria-label="Tetkik sonuçları">
+    <div class="rapor-bas" role="row"><span role="columnheader">Tetkik: hekim adaylarının hasta başına hazırlığı</span><span role="columnheader">Sonuç · kaynak</span></div>
+    <div class="tetkik" role="row">
+      <div class="ad" role="cell">Yetkin olmadığı bir işlemi yapmak zorunda kalan intörnler</div>
+      <div class="sonuc" role="cell">%<span data-say="40.3">40,3</span><span class="bayrak" aria-label="yüksek">▲</span></div>
+      <div class="kaynak" role="cell">YÖK intörnlük çalıştayı, 2.078 intörn</div>
+    </div>
+    <div class="tetkik" role="row">
+      <div class="ad" role="cell">Teorik intörnlük eğitiminin mesleğe katkısı olmadığını söyleyenler</div>
+      <div class="sonuc" role="cell">%<span data-say="75.6">75,6</span><span class="bayrak" aria-label="yüksek">▲</span></div>
+      <div class="kaynak" role="cell">Aynı çalıştay</div>
+    </div>
+    <div class="tetkik" role="row">
+      <div class="ad" role="cell">Yeni mezunların klinik akıl yürütme ve acil yönetimine hazırlığı</div>
+      <div class="sonuc kelime" role="cell">Yetersiz<span class="bayrak" aria-label="düşük">▼</span></div>
+      <div class="kaynak" role="cell">İngiltere, 87 çalışmalık derleme</div>
+    </div>
+    <div class="tetkik" role="row">
+      <div class="ad" role="cell">Sanal hastayla çalışanların beceri kazanımı, geleneksel eğitime göre</div>
+      <div class="sonuc kelime" role="cell">Daha yüksek</div>
+      <div class="kaynak" role="cell">51 randomize çalışmanın meta-analizi</div>
+    </div>
+    <div class="yorum"><b>Yorum</b><p>Bilgi eksikliği değil, prova eksikliği. Hasta başına çıkmadan önce bir yer lazım.</p></div>
+  </div>
+</section>
+
+<!-- BİR VAKA, BAŞTAN SONA -->
+<section class="vaka" id="vaka" aria-labelledby="vaka-b">
+  <div class="vaka-ic">
+    <div class="vaka-bas">
+      <h2 id="vaka-b">Bir vaka,<br>baştan sona</h2>
+      <div class="saat" aria-hidden="true"><small>Vaka saati</small><output id="vakaSaati">00:00</output></div>
+    </div>
+
+    <div class="adimlar">
+      <article class="adim">
+        <div class="no">1 · Kapı</div>
+        <h3>Önce hangi alan?</h3>
+        <p>Hasta acilin kapısından girer. İlk kararın triyaj: kırmızı, sarı ya da yeşil alan. Saat, sen seçince başlar.</p>
+        <p class="ercan">Ercan Abi: “Hocam, amcanın yüzü kül gibi. Vakit kaybetmeyelim.”</p>
+      </article>
+      <article class="adim">
+        <div class="no">2 · Masa</div>
+        <h3>Sor, muayene et, bak</h3>
+        <p>Soruyu klavyeyle kendin yazarsın. Muayene edersin, e-Nabız'da geçmişine bakarsın, monitörü bağlarsın. Bulduğun her şey masaya düşer.</p>
+      </article>
+      <article class="adim">
+        <div class="no">3 · Saat</div>
+        <h3>Zaman hastadan gider</h3>
+        <p>Her tetkik ve müdahale vaka saatinden zaman yer. Yanlış sıra hastayı kötüleştirir. Bir yandan da kapıda hasta yakını cevap bekler.</p>
+      </article>
+      <article class="adim">
+        <div class="no">4 · Karne</div>
+        <h3>Senin yolun, kılavuzun yolu</h3>
+        <p>Vaka bitince attığın her adım, kılavuzdaki ideal yolla yan yana konur. Neyi zamanında yaptığını, neyi atladığını görürsün.</p>
+        <p class="ercan">Ercan Abi: “Hocam, amca kateter laboratuvarına zamanında girdi. Bu iş böyle yapılır.”</p>
+      </article>
+    </div>
+
+    <div class="ekranlar">
+      <img src="img/oyun-triyaj-karari.jpg" alt="Triyaj ekranı: göğüs ağrılı 58 yaşında erkek hasta, kırmızı, sarı ve yeşil alan düğmeleri">
+      <img src="img/oyun-vaka.jpg" alt="Vaka ekranı: hasta portresi, vital bulgular, Ercan Abi'nin sorusu" loading="lazy">
+      <img src="img/oyun-hasta-yakini.jpg" alt="Hasta yakını ekranı: hastanın eşi 'Kocam ne olacak?' diye soruyor" loading="lazy">
+      <img src="img/oyun-sonuc.jpg" alt="Karne ekranı: 715 puan, doğru tanı akut anterior STEMI" loading="lazy">
+    </div>
+
+    <div class="vaka-ekg" aria-hidden="true"><canvas id="ekg2"></canvas><div class="nabiz"><span id="nabiz2">104</span><small>/dk</small></div></div>
+    <div class="ilerleme" aria-hidden="true"><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i></div>
+
+    <div class="duz">
+      <figure><img src="img/oyun-triyaj-karari.jpg" alt="Triyaj ekranı" loading="lazy"><figcaption class="adim"><div class="no">1 · Kapı</div><h3>Önce hangi alan?</h3><p>Hasta acilin kapısından girer. İlk kararın triyaj: kırmızı, sarı ya da yeşil alan. Saat, sen seçince başlar.</p></figcaption></figure>
+      <figure><img src="img/oyun-vaka.jpg" alt="Vaka ekranı" loading="lazy"><figcaption class="adim"><div class="no">2 · Masa</div><h3>Sor, muayene et, bak</h3><p>Soruyu klavyeyle kendin yazarsın. Muayene edersin, e-Nabız'da geçmişine bakarsın, monitörü bağlarsın.</p></figcaption></figure>
+      <figure><img src="img/oyun-hasta-yakini.jpg" alt="Hasta yakını ekranı" loading="lazy"><figcaption class="adim"><div class="no">3 · Saat</div><h3>Zaman hastadan gider</h3><p>Her tetkik ve müdahale vaka saatinden zaman yer. Yanlış sıra hastayı kötüleştirir.</p></figcaption></figure>
+      <figure><img src="img/oyun-sonuc.jpg" alt="Karne ekranı" loading="lazy"><figcaption class="adim"><div class="no">4 · Karne</div><h3>Senin yolun, kılavuzun yolu</h3><p>Vaka bitince attığın her adım, kılavuzdaki ideal yolla yan yana konur.</p></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- SIRA SENDE -->
+<section class="bolum sira" id="sira" aria-labelledby="sira-b">
+  <div class="sira-ic">
+    <div class="portre" id="siraPortre">
+      <img src="/triyaj/img/ai/gogus-1.webp" alt="Göğsünü tutan, terli, 58 yaşında erkek hasta" loading="lazy">
+      <img class="sonra" src="/triyaj/img/ai/gogus-2.webp" alt="" loading="lazy">
+      <div class="alan-kalibi" id="kalip"></div>
+      <div class="etiket">Erkek, 58<small>Göğüs ağrısı</small></div>
+    </div>
+    <div>
+      <h2 id="sira-b">Sıra sende, hocam.</h2>
+      <p class="soz"><b>Hasta</b>“Yarım saattir göğsümün ortasında bir baskı var, sol koluma vuruyor.”</p>
+      <p class="gorunus">Terli ve soluk. Yumruğunu göğsünün ortasına bastırıyor, endişeli görünüyor.</p>
+      <dl class="mini-vital"><div><dt>Nabız</dt><dd>104</dd></div><div><dt>SpO₂</dt><dd>%95</dd></div><div><dt>TA</dt><dd>150/90</dd></div></dl>
+      <p class="secim-soru" id="secimSoru">Hastayı hangi alana alıyorsun?</p>
+      <div class="secimler" role="group" aria-labelledby="secimSoru" id="secimler">
+        <button class="alan" type="button" data-alan="kirmizi" aria-pressed="false">Kırmızı alan</button>
+        <button class="alan" type="button" data-alan="sari" aria-pressed="false">Sarı alan</button>
+        <button class="alan" type="button" data-alan="yesil" aria-pressed="false">Yeşil alan</button>
+      </div>
+      <div class="cevap" id="cevap" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- BU GECE NÖBETTE -->
+<section class="bolum kadro" id="kadro" aria-labelledby="kadro-b">
+  <h2 id="kadro-b">Bu gece nöbette</h2>
+  <p class="on">Dört hasta, bir hemşire, bir sen. Vakaları tıp öğrencileri yazıyor, her biri kılavuza göre kuruluyor.</p>
+  <div class="kadro-ic">
+    <div class="ercan-kart">
+      <div class="portre"><img src="/triyaj/img/ai/hemsire.webp" alt="Ercan Abi: kollarını kavuşturmuş, gözlükleri başında, deneyimli acil hemşiresi" loading="lazy"></div>
+      <div>
+        <blockquote>“Hoş geldin hocam. Kapıda bir hasta var, nereye alalım?”</blockquote>
+        <div class="kim">Ercan Abi<small>Kıdemli acil hemşiresi. İpucu verir, uyarır, gerekirse kızar. Oyunda 175 repliği seslendirildi.</small></div>
+        <button class="dugme ince dinle" type="button" data-ses="ses/ercan-karsilama.mp3">Ercan Abi'yi dinle</button>
+      </div>
+    </div>
+    <div>
+      <div class="hastalar">
+        <button class="hasta" type="button" aria-pressed="false" aria-label="Erkek, 58, göğüs ağrısı. Beklerse ne olur?">
+          <span class="portre"><img src="/triyaj/img/ai/gogus-1.webp" alt="" loading="lazy"><img class="sonra" src="/triyaj/img/ai/gogus-2.webp" alt="" loading="lazy"></span>
+          <span class="zaman">Beklerse</span>
+          <h3>Erkek, 58</h3><span class="sikayet">Göğüs ağrısı</span>
+          <span class="ne"><span class="o">Terli ve soluk. Yumruğunu göğsünün ortasına bastırıyor.</span><span class="s">Daha da soldu, alnında soğuk ter var. Sedyede kıpırdamadan yatıyor.</span></span>
+        </button>
+        <button class="hasta" type="button" aria-pressed="false" aria-label="Erkek, 28, karın ağrısı. Beklerse ne olur?">
+          <span class="portre"><img src="/triyaj/img/ai/karin-1.webp" alt="" loading="lazy"><img class="sonra" src="/triyaj/img/ai/karin-2.webp" alt="" loading="lazy"></span>
+          <span class="zaman">Beklerse</span>
+          <h3>Erkek, 28</h3><span class="sikayet">Karın ağrısı</span>
+          <span class="ne"><span class="o">Hafif öne eğik yürüyor, eli sağ alt karnında.</span><span class="s">Dizlerini karnına çekmiş, terli ve ateşli. Karnına dokundurmuyor.</span></span>
+        </button>
+        <button class="hasta" type="button" aria-pressed="false" aria-label="Kadın, 24, nefes darlığı. Beklerse ne olur?">
+          <span class="portre"><img src="/triyaj/img/ai/nefes-1.webp" alt="" loading="lazy"><img class="sonra" src="/triyaj/img/ai/nefes-2.webp" alt="" loading="lazy"></span>
+          <span class="zaman">Beklerse</span>
+          <h3>Kadın, 24</h3><span class="sikayet">Nefes darlığı</span>
+          <span class="ne"><span class="o">Dudakları şiş, boynunda kızarık kabarıklar. Elinin üstünde sokma izi.</span><span class="s">Dudakları morarmış, konuşamıyor. Her nefeste hışırtılı bir ses.</span></span>
+        </button>
+        <button class="hasta" type="button" aria-pressed="false" aria-label="Kadın, 41, baş ağrısı. Beklerse ne olur?">
+          <span class="portre"><img src="/triyaj/img/ai/co-1.webp" alt="" loading="lazy"><img class="sonra" src="/triyaj/img/ai/co-2.webp" alt="" loading="lazy"></span>
+          <span class="zaman">Beklerse</span>
+          <h3>Kadın, 41</h3><span class="sikayet">Baş ağrısı</span>
+          <span class="ne"><span class="o">Soluk ve uykulu, kucağında kusma kabı. Hırkası pijamasının üstünde.</span><span class="s">Uykuya kayıyor, sorulara geç ve karışık cevap veriyor.</span></span>
+        </button>
+      </div>
+      <p class="hasta-ipucu">Bir hastanın üstüne gel ya da dokun: beklerse ne olacağını gör.</p>
+    </div>
+  </div>
+</section>
+
+<!-- UYDURMA CEVAP YOK -->
+<section class="bolum ilke" aria-labelledby="ilke-b">
+  <div class="ilke-ic">
+    <div>
+      <h2 id="ilke-b">Uydurma cevap yok.</h2>
+      <p class="on">Tıpta yanlış bilgi oyun hatası değildir.</p>
+      <p class="uzun">Oyuncu soruyu kendi cümlesiyle yazar. Bir eşleştirme algoritması onu önceden hazırlanmış yüzlerce sorudan birine bağlar. Muayene, tetkik ve tedavi seçimleri çoktan seçmelidir. Oyundaki her cevap önceden yazılmış ve kontrol edilmiştir; her vaka yayına girmeden önce uzman hekim onayından geçecek.</p>
+    </div>
+    <div class="esle" aria-label="Serbest soru eşleştirme örnekleri">
+      <div class="esle-satir">
+        <div class="yazilan" data-yaz="ailede kalp hastası var mı">ailede kalp hastası var mı</div>
+        <div class="ok" aria-hidden="true"></div>
+        <div class="bulunan">Soygeçmiş<small>Hazır soru, yazılmış cevap</small></div>
+      </div>
+      <div class="esle-satir">
+        <div class="yazilan" data-yaz="evinizi neyle ısıtıyorsunuz">evinizi neyle ısıtıyorsunuz</div>
+        <div class="ok" aria-hidden="true"></div>
+        <div class="bulunan">Isınma ve ev ortamı<small>Karbonmonoksit vakasının ipucu</small></div>
+      </div>
+      <p class="esle-not">Emin olamadığında oyun tahmin etmez, en yakın soruları önerir.</p>
+    </div>
+  </div>
+</section>
+
+<!-- İLK SAHA TESTİ -->
+<section class="bolum saha" aria-labelledby="saha-b">
+  <div class="tarih">7 Ekim 2026</div>
+  <h2 id="saha-b" class="gizli">İlk saha testi</h2>
+  <div class="saha-akis">
+    <p>Ekibi tanımayan 5. sınıf bir tıp öğrencisi, tek bir vakayı denemek için oturdu.</p>
+    <p>Bir saate yakın kalkmadı. Dört vakanın dördünü bitirdi.</p>
+    <p>Bugün ekipte. Bizim için üç yeni vaka yazıyor.</p>
+  </div>
+  <p class="saha-imza">İlk saha testi. Verdiği geri bildirimlerin üçü aynı gece oyuna girdi.</p>
+</section>
+
+<!-- YOL HARİTASI -->
+<section class="bolum yol" aria-labelledby="yol-b">
+  <h2 id="yol-b">Acilden başladık</h2>
+  <p class="on">Hedefimiz tıp ders kitaplarının yol arkadaşı olmak. Dil kitaplarının yanında nasıl dinleme uygulaması varsa, tıp kitabının her bölümünün yanında da oynanabilir bir hasta olacak.</p>
+  <ol class="yol-liste">
+    <li class="oldu"><div class="ne-zaman">Ekim 2026</div><h3>Canlıda</h3><p>Dört acil vakası oynanabiliyor. Telefona uygulama gibi eklenebiliyor. İlk saha testi yapıldı.</p></li>
+    <li><div class="ne-zaman">Kasım – Aralık 2026</div><h3>Hekim onayı</h3><p>Vakalar uzman hekim onayından geçiyor. Kullanıcı testleri genişliyor, fakültelerle görüşüyoruz.</p></li>
+    <li><div class="ne-zaman">Sonra</div><h3>Kitabın yanında</h3><p>Öğrenci bölümü okur, kitaptaki QR kodu okutur, o bölümün hastasında karar verir.</p></li>
+    <li><div class="ne-zaman">Sonra</div><h3>Vaka portalı</h3><p>Hocalar kendi vakalarını ekler. Her fakülte kendi hocalarının vakalarıyla çalışır.</p></li>
+    <li><div class="ne-zaman">Sonra</div><h3>Bütün branşlar</h3><p>Acil ilk servisimiz. Diğer branşlar sırayla gelecek.</p></li>
+  </ol>
+  <p class="model">Çekirdeği öğrenciye her zaman ücretsiz. Yayınevi ve fakülte lisanslarıyla dönen bir model kuruyoruz.</p>
+</section>
+
+<!-- EKİP -->
+<section class="bolum ekip" id="ekip" aria-labelledby="ekip-b">
+  <h2 id="ekip-b">Üç kişiyiz</h2>
+  <p class="on">Biri kodu yazıyor, ikisi hastayı biliyor.</p>
+  <div class="ekip-liste">
+    <div class="kisi"><div class="rol">Kurucu · yazılım ve tasarım</div><h3>Ahmet Okan Ertem</h3><p>Triyaj'ın oyununu, sesini ve bu siteyi yaptı.</p></div>
+    <div class="kisi"><div class="rol">Klinik içerik</div><h3>Emirhan Erdoğan</h3><p>İstanbul Medeniyet Üniversitesi Tıp Fakültesi.</p></div>
+    <div class="kisi"><div class="rol">Klinik içerik</div><h3>Mahmut Emre Furat</h3><p>Sağlık Bilimleri Üniversitesi Tıp Fakültesi, 5. sınıf. İlk saha testini yaptı, sonra ekibe katıldı.</p></div>
+  </div>
+</section>
+
+<!-- SON ÇAĞRI -->
+<section class="son" aria-labelledby="son-b">
+  <div class="resim" aria-hidden="true"></div>
+  <h2 id="son-b">Nöbet<br>başlıyor.</h2>
+  <div class="eylemler">
+    <a class="dugme" href="/triyaj/">Triyaj'ı oyna</a>
+    <a class="dugme ince" href="mailto:ahmetokanertem11@gmail.com">Bize yaz</a>
+  </div>
+</section>
+</main>
+
+<footer class="alt">
+  <a class="marka" href="#" aria-label="ErtemTech, başa dön">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M4 36 H20 l3 -4 l3 4 H30 L33 42 L37 14 L41 50 L44 36 H60" fill="none" stroke="#8fd3c7" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><rect x="47" y="8" width="10" height="10" fill="#e8603a"/></svg>
+    ERTEM<span>TECH</span>
+  </a>
+  <div>Sağlık teknolojisi · tıp eğitimi için oyunlar · İstanbul, 2026</div>
+  <div><a href="mailto:ahmetokanertem11@gmail.com">ahmetokanertem11@gmail.com</a> · <a href="https://github.com/Ahmet-Okan/triyaj">GitHub</a></div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var AZALT = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var GSAP = !!window.gsap, ST = GSAP && !!window.ScrollTrigger;
+  if (ST) gsap.registerPlugin(ScrollTrigger);
+
+  /* ---------- ses: ambiyans + monitör bipi, sadece kullanıcı açarsa ---------- */
+  var sesAcik = false, ac = null, ortam = null;
+  function bip() {
+    if (!sesAcik || !ac) return;
+    var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine"; o.frequency.value = 980;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.14);
+  }
+  var sesDugme = document.getElementById("sesDugme");
+  sesDugme.addEventListener("click", function () {
+    sesAcik = !sesAcik;
+    sesDugme.setAttribute("aria-pressed", sesAcik);
+    sesDugme.textContent = sesAcik ? "Sesi kapat" : "Sesi aç";
+    if (sesAcik) {
+      try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) {}
+      if (!ortam) { ortam = new Audio("/triyaj/ses/ortam-acil.mp3"); ortam.loop = true; ortam.volume = 0.35; }
+      ortam.play().catch(function () {});
+    } else if (ortam) ortam.pause();
+  });
+  var calan = null;
+  function konus(yol) {
+    if (calan) calan.pause();
+    calan = new Audio(yol); calan.play().catch(function () {});
+  }
+
+  /* ---------- EKG monitörü: süpürme izi, gerçek dalga biçimi ---------- */
+  function g(x, m, s) { return Math.exp(-((x - m) * (x - m)) / (2 * s * s)); }
+  function dalga(p) { // tek atımın biçimi (P, QRS, T), p: 0..1
+    return 0.11 * g(p, 0.16, 0.022) - 0.10 * g(p, 0.272, 0.007) + 1.0 * g(p, 0.30, 0.0095)
+         - 0.24 * g(p, 0.326, 0.009) + 0.22 * g(p, 0.56, 0.045);
+  }
+  function Monitor(canvas, o) {
+    var m = this;
+    m.c = canvas; m.x = canvas.getContext("2d");
+    m.bpm = o.bpm || 104; m.renk = o.renk || "#8fd3c7"; m.hiz = o.hiz || 0.2; m.genlik = o.genlik || 0.42;
+    m.basla = o.basla || 0; m.onAtim = o.onAtim || null; m.calis = false;
+    m.zaman = 0; m.faz = 0;
+    m.olc(); window.addEventListener("resize", function () { m.olc(); });
+  }
+  Monitor.prototype.olc = function () {
+    var r = this.c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    this.w = Math.max(1, Math.round(r.width)); this.h = Math.max(1, r.height);
+    this.c.width = this.w * d; this.c.height = this.h * d; this.x.setTransform(d, 0, 0, d, 0, 0);
+    this.iz = new Float32Array(this.w).fill(NaN);
+    this.bas = 0;
+  };
+  Monitor.prototype.ornek = function () { // bir piksellik zaman ilerlet, dalga değerini ver
+    var dt = 1 / (this.w * this.hiz);
+    this.zaman += dt;
+    if (this.zaman < this.basla) return 0;
+    var once = this.faz;
+    this.faz += dt * this.bpm / 60;
+    if (this.onAtim && Math.floor(this.faz + 0.7) !== Math.floor(once + 0.7)) this.onAtim(); // R dalgası anı (p≈0,30)
+    return dalga(this.faz % 1);
+  };
+  Monitor.prototype.adim = function (dt) {
+    var m = this, ctx = m.x, n = m.w, hedef = m.bas + m.w * m.hiz * dt;
+    for (var x = Math.floor(m.bas); x < Math.floor(hedef); x++) m.iz[x % n] = m.h * 0.62 - m.ornek() * m.h * m.genlik;
+    m.bas = hedef % n;
+    ctx.clearRect(0, 0, n, m.h);
+    var bosluk = 26, bx = Math.floor(m.bas);
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.strokeStyle = m.renk; ctx.lineWidth = 2.2; ctx.shadowColor = m.renk; ctx.shadowBlur = 10;
+    ctx.beginPath(); var acik = false;
+    for (var i = 0; i < n; i++) {
+      var ileri = (i - bx + n) % n, y = m.iz[i];
+      if (isNaN(y) || ileri < bosluk) { acik = false; continue; }
+      if (!acik) { ctx.moveTo(i, y); acik = true; } else ctx.lineTo(i, y);
+    }
+    ctx.stroke();
+    var by = m.iz[(bx - 1 + n) % n];
+    if (!isNaN(by)) { ctx.shadowBlur = 18; ctx.fillStyle = "#e9fff9"; ctx.beginPath(); ctx.arc(bx, by, 3, 0, 7); ctx.fill(); }
+    ctx.shadowBlur = 0;
+  };
+  Monitor.prototype.oynat = function () {
+    var m = this; if (m.calis) return; m.calis = true; m.son = performance.now();
+    (function dongu(t) {
+      if (!m.calis) return;
+      var dt = Math.min(0.05, Math.max(0, (t - m.son) / 1000)); m.son = t;
+      m.adim(dt); m.raf = requestAnimationFrame(dongu);
+    })(m.son);
+  };
+  Monitor.prototype.dur = function () { this.calis = false; cancelAnimationFrame(this.raf); };
+  function gorunurken(el, mon) {
+    if (!("IntersectionObserver" in window)) { mon.oynat(); return; }
+    new IntersectionObserver(function (e) { e[0].isIntersecting ? mon.oynat() : mon.dur(); }).observe(el);
+  }
+
+  /* ---------- açılış: düz çizgi, ilk atım, acil kapısı ---------- */
+  var kalp = document.getElementById("kalp"), ilkAtim = true;
+  var lambalar = document.querySelectorAll(".lamba");
+  var ekg = new Monitor(document.getElementById("ekg"), {
+    bpm: 104, hiz: 0.2, basla: AZALT ? 0 : 0.9,
+    onAtim: function () {
+      bip();
+      kalp.classList.remove("vur"); void kalp.offsetWidth; kalp.classList.add("vur");
+      if (ilkAtim) { ilkAtim = false; acilisAc(); }
+    }
+  });
+
+  function acilisAc() {
+    if (!GSAP || AZALT) return;
+    var tl = gsap.timeline();
+    tl.to(".acilis .resim", { opacity: 1, scale: 1, duration: 1.6, ease: "power2.out" }, 0)
+      .to(".acilis h1 .satir > span", { yPercent: 0, duration: 1.0, ease: "power4.out", stagger: 0.12 }, 0.15)
+      .to([".acilis .alt-metin", ".vital", ".ust"], { opacity: 1, y: 0, duration: 0.9, ease: "power2.out", stagger: 0.08 }, 0.55);
+    document.querySelectorAll(".vital [data-say]").forEach(function (el) {
+      var h = +el.dataset.say, o = { v: h * 0.6 };
+      tl.to(o, { v: h, duration: 1.2, ease: "power2.out", onUpdate: function () { el.textContent = Math.round(o.v); } }, 0.55);
+    });
+    // kapıdaki ambulansın lambası: kırmızı, mavi
+    gsap.to(lambalar[0], { opacity: 0.9, duration: 0.42, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 1 });
+    gsap.to(lambalar[1], { opacity: 0.8, duration: 0.42, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 1.42 });
+  }
+
+  if (GSAP && !AZALT) {
+    gsap.set(".acilis .resim", { opacity: 0, scale: 1.08 });
+    gsap.set(".acilis h1 .satir > span", { yPercent: 140 });
+    gsap.set([".acilis .alt-metin", ".vital", ".ust"], { opacity: 0, y: 14 });
+    setTimeout(function () { if (ilkAtim) { ilkAtim = false; acilisAc(); } }, 2600); // sekme arkadaysa yine de aç
+    if (ST) gsap.to(".acilis .resim", { yPercent: 8, ease: "none", scrollTrigger: { trigger: ".acilis", start: "top top", end: "bottom top", scrub: true } });
+  }
+  gorunurken(document.querySelector(".acilis"), ekg); // monitör içeriktir: hareket azaltılsa da çalışır
+
+  var ust = document.getElementById("ust");
+  window.addEventListener("scroll", function () { ust.classList.toggle("dolu", window.scrollY > window.innerHeight * 0.6); }, { passive: true });
+
+  /* ---------- tetkik sonuçları: değerler yazılır ---------- */
+  if (ST && !AZALT) {
+    document.querySelectorAll(".tetkik [data-say]").forEach(function (el) {
+      var h = +el.dataset.say, o = { v: 0 };
+      el.textContent = "0,0";
+      gsap.to(o, { v: h, duration: 1.4, ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 85%", once: true },
+        onUpdate: function () { el.textContent = o.v.toFixed(1).replace(".", ","); } });
+    });
+  }
+
+  /* ---------- bir vaka, baştan sona: kaydırma vaka saatini sürer ---------- */
+  var vaka = document.getElementById("vaka");
+  var adimlar = vaka.querySelectorAll(".adimlar .adim"), ekranlar = vaka.querySelectorAll(".ekranlar img");
+  var dolgular = vaka.querySelectorAll(".ilerleme b"), saatEl = document.getElementById("vakaSaati"), nabizEl = document.getElementById("nabiz2");
+  var ADIM_NABIZ = [104, 112, 118, 82]; // bekledikçe kötüleşir, tedaviyle düzelir
+  var ekg2 = new Monitor(document.getElementById("ekg2"), { bpm: 104, hiz: 0.12, genlik: 0.4 });
+
+  function saatYaz(dk) { var d = Math.floor(dk), s = Math.floor((dk - d) * 60); saatEl.textContent = (d < 10 ? "0" : "") + d + ":" + (s < 10 ? "0" : "") + s; }
+
+  if (ST) {
+    var mm = gsap.matchMedia();
+    // kaydırmayla ilerleyen vaka, kullanıcının kendi hareketidir; hareket azaltılmışsa sadece kayma/ölçek kalkar
+    mm.add({ genis: "(min-width: 901px)", dar: "(max-width: 900px)", azalt: "(prefers-reduced-motion: reduce)" }, function (ctx) {
+      if (!ctx.conditions.genis) { vaka.classList.add("yigin"); return; }
+      var Y = ctx.conditions.azalt ? 0 : 30, S = ctx.conditions.azalt ? 1 : 1.04;
+      vaka.classList.remove("yigin");
+      ekg2.olc();
+      gsap.set(adimlar, { autoAlpha: 0, y: Y }); gsap.set(adimlar[0], { autoAlpha: 1, y: 0 });
+      gsap.set(ekranlar, { autoAlpha: 0, scale: S }); gsap.set(ekranlar[0], { autoAlpha: 1, scale: 1 });
+      var tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: vaka, start: "top top", end: function () { return "+=" + window.innerHeight * 3.2; },
+          pin: true, scrub: 0.6, invalidateOnRefresh: true,
+          onUpdate: function (st) {
+            var p = st.progress; saatYaz(p * 8);
+            dolgular.forEach(function (b, i) { b.style.width = Math.max(0, Math.min(1, p * 4 - i)) * 100 + "%"; });
+            var a = Math.min(3, Math.floor(p * 4 + 0.08)); ekg2.bpm = ADIM_NABIZ[a]; nabizEl.textContent = ADIM_NABIZ[a];
+          },
+          onToggle: function (st) { st.isActive ? ekg2.oynat() : ekg2.dur(); }
+        }
+      });
+      for (var i = 1; i < adimlar.length; i++) {
+        tl.to(adimlar[i - 1], { autoAlpha: 0, y: -Y, duration: 0.4 }, i)
+          .to(ekranlar[i - 1], { autoAlpha: 0, duration: 0.5 }, i)
+          .to(adimlar[i], { autoAlpha: 1, y: 0, duration: 0.45 }, i + 0.15)
+          .to(ekranlar[i], { autoAlpha: 1, scale: 1, duration: 0.6 }, i);
+      }
+      tl.to({}, { duration: 0.6 });
+      return function () { ekg2.dur(); };
+    });
+  } else vaka.classList.add("yigin");
+
+  /* ---------- sıra sende: mini triyaj ---------- */
+  var secimler = document.getElementById("secimler"), cevap = document.getElementById("cevap");
+  var siraPortre = document.getElementById("siraPortre"), kalip = document.getElementById("kalip");
+  var REPLIK = {
+    kirmizi: "Kırmızı alan, aynen hocam. Göğüs ağrısı bekletilmez. EKG'yi on dakikada çekiyorum.",
+    sari: "Sarı mı hocam? Adam terliyor, nabız yüz dört. Kalpse beklerken kaybederiz. Kırmızıya alıyorum.",
+    yesil: "Yeşil mi? Hocam şaka yapıyorsun herhalde. Göğüs ağrısı bu. Kırmızıya alıyorum, sonra konuşuruz."
+  };
+  var RENK = { kirmizi: "var(--t-kirmizi)", sari: "var(--t-sari)", yesil: "var(--t-yesil)" };
+  var AD = { kirmizi: "Kırmızı alan", sari: "Sarı alan", yesil: "Yeşil alan" };
+  secimler.addEventListener("click", function (e) {
+    var b = e.target.closest(".alan"); if (!b || secimler.dataset.bitti) return;
+    var alan = b.dataset.alan, dogru = alan === "kirmizi";
+    secimler.dataset.bitti = "1";
+    secimler.querySelectorAll(".alan").forEach(function (x) { x.setAttribute("aria-pressed", x === b); x.setAttribute("aria-disabled", "true"); });
+    konus("ses/ercan-" + alan + ".mp3");
+    kalip.textContent = AD[alan]; kalip.style.background = RENK[alan];
+    if (GSAP && !AZALT) gsap.fromTo(kalip, { opacity: 0, scale: 1.8, rotate: -12 }, { opacity: 1, scale: 1, rotate: -3, duration: 0.35, ease: "back.out(2)" });
+    else kalip.style.opacity = 1;
+    if (!dogru) setTimeout(function () { siraPortre.classList.add("kotu"); }, 900);
+    cevap.innerHTML =
+      '<div class="ercan-satir"><img src="/triyaj/img/ai/hemsire' + (dogru ? "" : "-kizgin") + '.webp" alt="Ercan Abi">' +
+      '<div><p><b>Ercan Abi</b> – ' + REPLIK[alan] + '</p>' +
+      (dogru ? '<div class="rozet">Doğru kapı<small>Hastayı doğru triyaj alanına aldın.</small></div>'
+             : '<p class="not">Yanlış alan hastayı bekletir. Oyunda bu dakikalar karnene yazılır.</p>') +
+      '</div></div>' +
+      '<div class="devam"><a class="dugme" href="/triyaj/">Vakanın devamı oyunda</a><span class="not">Sırada öykü, EKG ve troponin var.</span></div>';
+    if (GSAP && !AZALT) gsap.from(cevap.children, { opacity: 0, y: 16, duration: 0.5, stagger: 0.12, ease: "power2.out" });
+  });
+
+  /* ---------- kadro: beklerse kötüleşir ---------- */
+  document.querySelectorAll(".hasta").forEach(function (h) {
+    var zm = null, por = h.querySelector(".portre");
+    function kotu(v) { h.classList.toggle("kotu", v); por.classList.toggle("kotu", v); h.setAttribute("aria-pressed", v); }
+    h.addEventListener("mouseenter", function () { zm = setTimeout(function () { kotu(true); }, 350); });
+    h.addEventListener("mouseleave", function () { clearTimeout(zm); kotu(false); });
+    h.addEventListener("click", function () { clearTimeout(zm); kotu(!h.classList.contains("kotu")); });
+  });
+  document.querySelectorAll("[data-ses]").forEach(function (b) { b.addEventListener("click", function () { konus(b.dataset.ses); }); });
+
+  /* ---------- serbest soru: yazılır, eşleşir ---------- */
+  if (ST && !AZALT) {
+    document.querySelectorAll(".yazilan[data-yaz]").forEach(function (el, i) {
+      var metin = el.dataset.yaz, sat = el.parentNode, o = { n: 0 };
+      el.textContent = "";
+      gsap.set(sat.querySelectorAll(".ok, .bulunan"), { autoAlpha: 0, x: -10 });
+      gsap.timeline({ scrollTrigger: { trigger: ".esle", start: "top 75%", once: true }, delay: i * 1.6 })
+        .to(o, { n: metin.length, duration: metin.length * 0.045, ease: "none", onUpdate: function () { el.textContent = metin.slice(0, Math.round(o.n)); } })
+        .to(sat.querySelectorAll(".ok, .bulunan"), { autoAlpha: 1, x: 0, duration: 0.35, stagger: 0.15 }, "+=0.2");
+    });
+    gsap.from(".saha-akis p", { autoAlpha: 0, y: 24, duration: 0.8, stagger: 0.5, ease: "power2.out", scrollTrigger: { trigger: ".saha-akis", start: "top 75%", once: true } });
+  }
+
+  if (document.fonts && ST) document.fonts.ready.then(function () { ScrollTrigger.refresh(); ekg.olc(); });
+})();
+</script>
 </body>
 </html>
